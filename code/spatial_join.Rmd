@@ -1,0 +1,143 @@
+---
+output: html_document
+---
+
+# Setup
+
+```{r}
+library(tidyverse)
+library(sf)
+library(ncdf4)
+library(leaflet)
+setwd("/Users/bulldf/University of Toronto/2024 Fall/STA497/code")
+data_dir <- "../data/"
+```
+
+# Reading data
+
+```{r}
+merra2 <- nc_open(paste0(data_dir, "20160101.nc4"))
+merra2
+
+openaq <- read_csv(paste0(data_dir, "openaq/openaq_integrated.csv")) |>
+  st_as_sf(coords = c("lon", "lat"), crs = 4326)
+head(openaq)
+
+sites <- openaq |> st_coordinates() |> unique()
+```
+
+# Creating the MERRA-2 grids
+
+```{r}
+merra2_lat <- ncvar_get(merra2, "lat")
+merra2_lon <- ncvar_get(merra2, "lon")
+merra2_coords <- expand.grid(lon = merra2_lon, lat = merra2_lat)
+
+merra2_polygons <- lapply(seq_len(nrow(merra2_coords)), function(i) {
+  lon <- merra2_coords$lon[i]
+  lat <- merra2_coords$lat[i]
+  # Créer un polygone pour chaque point
+  st_polygon(list(rbind(c(lon - 0.3125, lat - 0.25),
+                        c(lon + 0.3125, lat - 0.25),
+                        c(lon + 0.3125, lat + 0.25),
+                        c(lon - 0.3125, lat + 0.25),
+                        c(lon - 0.3125, lat - 0.25))))
+}) |>
+  # Créer un objet sf à partir de la liste de polygones
+  st_sfc(crs = 4326) |>
+  st_as_sf()
+
+# Créer un data frame sf
+merra2_grids <- st_sf(geometry = merra2_polygons)
+merra2_grids
+```
+
+```{r}
+# Extract latitude and longitude values from the NetCDF dataset
+latitudes <- ncvar_get(merra2, "lat")
+longitudes <- ncvar_get(merra2, "lon")
+
+date_sequence <- seq(from = as.Date("2016-01-01"),
+                     to = as.Date("2016-01-01"),
+                     by = "day")
+date_sequence <- date_sequence[date_sequence != as.Date("2020-02-29")]
+
+# Initialize an empty list to store the extracted data
+data_list <- list()
+
+# Variables to extract from the NetCDF file
+variable_names <- c("PBLH")
+
+# Loop through each site
+for (i in seq_len(nrow(sites))) {
+  lon_site <- sites[i, 1]
+  lat_site <- sites[i, 2]
+
+  # Find the nearest latitude and longitude indices
+  lat_index <- which.min(abs(latitudes - lat_site))
+  lon_index <- which.min(abs(longitudes - lon_site))
+
+  # Extract data for each variable
+  site_data <- list()
+
+  for (var in variable_names) {
+    # Extract the data for the variable using the found indices
+    var_data <- ncvar_get(
+      merra2,
+      var,
+      start = c(lon_index, lat_index, 1), count = c(1, 1, -1)
+    )
+    site_data[[var]] <- var_data
+  }
+
+  # Combine the site's data into a single dataframe
+  site_data_df <- as.data.frame(site_data)
+  site_data_df$lon <- longitudes[lon_index]
+  site_data_df$lat <- latitudes[lat_index]
+  site_data_df$date <- date_sequence
+  data_list[[i]] <- site_data_df
+}
+
+# Combine all site dataframes into a single dataframe
+final_data <- do.call(rbind, data_list) |> tibble()
+head(final_data)
+
+effective_merra2 <- final_data |>
+  st_as_sf(coords = c("lon", "lat"), crs = 4326)
+effective_merra2
+
+effective_merra2 <- st_join(merra2_polygons, effective_merra2, left = FALSE)
+effective_merra2
+```
+
+# Creating the map
+
+```{r}
+map <- leaflet() |>
+  addProviderTiles("CartoDB.Positron") |>
+  addPolygons(
+    data = merra2_grids,
+    opacity = 0.25,
+    color = "gray",
+    weight = 1,
+    fillOpacity = 0.1,
+    fillColor = "pink"
+  ) |>
+  addCircles(
+    lng = sites[, 1],
+    lat = sites[, 2],
+    radius = 50,
+    color = "blue",
+    opacity = 1,
+    fillColor = "blue",
+    fillOpacity = 1
+  )
+map
+```
+
+```{r}
+library(mapview)
+install.packages("webshot")
+webshot::install_phantomjs()
+mapshot(map, file = "map.png")
+```
