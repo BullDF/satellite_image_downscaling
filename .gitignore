@@ -1,0 +1,12 @@
+__pycache__/
+presentation/
+presentation2/
+Readings Course Presentation Guidelines.docx
+others/
+checkpoints/
+bst.json
+rf.pkl
+config.py
+papers/
+data/
+.DS_Store
