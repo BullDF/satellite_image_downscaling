@@ -12,10 +12,10 @@ from typing import Optional, List
 import matplotlib.pyplot as plt
 
 
-LEARNING_RATE = 0.001
+LEARNING_RATE = 0.005
 TRAIN_BATCH_SIZE = 2048
 EVAL_BATCH_SIZE = 4096
-NUM_EPOCHS = 100
+NUM_EPOCHS = 50
 
 
 if torch.cuda.is_available():
@@ -46,7 +46,10 @@ def train(model: nn.Module,
           round: int,
           initial_epoch: int=0,
           checkpoint_round: Optional[int]=None,
-          save: bool=True) -> None:
+          save: bool=True,
+          targeting: bool=False,
+          targeting_threshold: float=200,
+          targeting_epochs: int=NUM_EPOCHS // 4) -> None:
     optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
     criterion = nn.MSELoss().to(device)
     train_loader = DataLoader(train_dataset, batch_size=TRAIN_BATCH_SIZE, shuffle=True)
@@ -68,6 +71,10 @@ def train(model: nn.Module,
         print(f'Training epoch {epoch + 1}')
         model.train()
         for inputs, labels in tqdm(train_loader):
+            if targeting and epoch < targeting_epochs:
+                targets = labels >= targeting_threshold
+                inputs = inputs[targets]
+                labels = labels[targets]
             inputs = inputs.to(device)
             labels = labels.to(device)
             outputs = model(inputs).squeeze()
@@ -194,8 +201,7 @@ if __name__ == '__main__':
     X_val = np.load(nn_data_dir + 'removed_multicollinearity/X_val_removed_multicollinearity.npy')
     y_val = np.load(nn_data_dir + 'removed_multicollinearity/y_val_removed_multicollinearity.npy')
 
-    # model = AridityModel(len(X_train[0])).to(device)
-    model = AridityModelBatchNormAfterActivation(len(X_train[0])).to(device)
+    model = AridityModel(len(X_train[0])).to(device)
     train_dataset = OpenAQDataset(X_train, y_train)
     val_dataset = OpenAQDataset(X_val, y_val)
 
