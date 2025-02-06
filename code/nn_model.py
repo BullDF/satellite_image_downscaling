@@ -365,3 +365,49 @@ class AridityModel(nn.Module):
         x = self.out(x)
 
         return x
+
+class AridityModelBatchNormAfterActivation(nn.Module):
+    def __init__(self, num_vars: int):
+        super(AridityModelBatchNormAfterActivation, self).__init__()
+        self.site_embedding = nn.Embedding(NUM_SITES, embed_sizes['site'])
+        self.season_embedding = nn.Embedding(4, embed_sizes['season'])
+        self.month_embedding = nn.Embedding(12, embed_sizes['month'])
+        self.day_embedding = nn.Embedding(7, embed_sizes['day'])
+        self.hour_embedding = nn.Embedding(24, embed_sizes['hour'])
+        self.aridity_embedding = nn.Embedding(2, embed_sizes['aridity'])
+
+        self.fc1 = nn.Linear(num_vars - 6 + TOTAL_EMBED_SIZE, 512)
+        self.fc2 = nn.Linear(512, 1024)
+        self.fc3 = nn.Linear(1024, 512)
+        self.out = nn.Linear(512, 1)
+        self.relu = nn.ReLU()
+        self.pre_batch_norm = nn.BatchNorm1d(num_vars - 6)
+        self.batch_norm1 = nn.BatchNorm1d(512)
+        self.batch_norm2 = nn.BatchNorm1d(1024)
+        self.batch_norm3 = nn.BatchNorm1d(512)
+
+    def embedding(self, x):
+        site_embedded = self.site_embedding(x[:, aridity_idx['site']].to(torch.long))
+        season_embedded = self.season_embedding(x[:, aridity_idx['season']].to(torch.long))
+        month_embedded = self.month_embedding(x[:, aridity_idx['month']].to(torch.long))
+        day_embedded = self.day_embedding(x[:, aridity_idx['day']].to(torch.long))
+        hour_embedded = self.hour_embedding(x[:, aridity_idx['hour']].to(torch.long))
+        aridity_embedded = self.aridity_embedding(x[:, aridity_idx['aridity']].to(torch.long))
+        return torch.concat([site_embedded, season_embedded, month_embedded, day_embedded, hour_embedded, aridity_embedded], dim=1)
+        
+    def forward(self, x):
+        embedded = self.embedding(x)
+        x = self.pre_batch_norm(x[:, :-6])
+        x = torch.concat([x, embedded], dim=1)
+        x = self.fc1(x)
+        x = self.relu(x)
+        x = self.batch_norm1(x)
+        x = self.fc2(x)
+        x = self.relu(x)
+        x = self.batch_norm2(x)
+        x = self.fc3(x)
+        x = self.relu(x)
+        x = self.batch_norm3(x)
+        x = self.out(x)
+
+        return x
