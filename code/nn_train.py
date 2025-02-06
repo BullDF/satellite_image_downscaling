@@ -12,7 +12,7 @@ from typing import Optional, List
 import matplotlib.pyplot as plt
 
 
-LEARNING_RATE = 0.005
+LEARNING_RATE = 0.001
 TRAIN_BATCH_SIZE = 2048
 EVAL_BATCH_SIZE = 4096
 NUM_EPOCHS = 100
@@ -182,19 +182,27 @@ if __name__ == '__main__':
 
     # ------------------------------------------------------------------
 
-    X_train = np.load(nn_data_dir + 'aridity/X_train_aridity.npy')
-    y_train = np.load(nn_data_dir + 'aridity/y_train_aridity.npy')
-    X_val = np.load(nn_data_dir + 'aridity/X_val_aridity.npy')
-    y_val = np.load(nn_data_dir + 'aridity/y_val_aridity.npy')
+    # X_train = np.load(nn_data_dir + 'aridity/X_train_aridity.npy')
+    # y_train = np.load(nn_data_dir + 'aridity/y_train_aridity.npy')
+    # X_val = np.load(nn_data_dir + 'aridity/X_val_aridity.npy')
+    # y_val = np.load(nn_data_dir + 'aridity/y_val_aridity.npy')
+
+    # ------------------------------------------------------------------
+
+    X_train = np.load(nn_data_dir + 'removed_multicollinearity/X_train_removed_multicollinearity.npy')
+    y_train = np.load(nn_data_dir + 'removed_multicollinearity/y_train_removed_multicollinearity.npy')
+    X_val = np.load(nn_data_dir + 'removed_multicollinearity/X_val_removed_multicollinearity.npy')
+    y_val = np.load(nn_data_dir + 'removed_multicollinearity/y_val_removed_multicollinearity.npy')
 
     # model = AridityModel(len(X_train[0])).to(device)
-    # train_dataset = OpenAQDataset(X_train, y_train)
-    # val_dataset = OpenAQDataset(X_val, y_val)
+    model = AridityModelBatchNormAfterActivation(len(X_train[0])).to(device)
+    train_dataset = OpenAQDataset(X_train, y_train)
+    val_dataset = OpenAQDataset(X_val, y_val)
 
-    # train(model, train_dataset, val_dataset, get_training_round(model))
+    train(model, train_dataset, val_dataset, get_training_round(model), save=False)
 
     # load_checkpoint(model, 5, 200)
 
     # print(evaluate(model, train_dataset))
 
-    leave_one_out_cv(X_train, y_train, 11)
+    # leave_one_out_cv(X_train, y_train, 11)
