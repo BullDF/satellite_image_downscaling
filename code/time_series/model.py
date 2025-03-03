@@ -4,10 +4,26 @@ from config import checkpoints_dir
 
 from torch.utils.data import Dataset
 
-offset = 7
-nums_variables = {'aerosols': 13, 'meteorology': 12, 'surface_flux': 1}
-indices = {'site': 0, 'lat': 1, 'lon': 2, 'year': 3, 'month': 4, 'day': 5, 'hour': 6, 'aerosols_start': 0, 'aerosols_end': 13 * 25, 'meteorology_start': 13 * 25, 'meteorology_end': 13 * 25 + 12 * 25, 'surface_flux_start': 13 * 25 + 12 * 25, 'surface_flux_end': 13 * 25 + 12 * 25 + 1 * 25}
-num_sites = 11
+offset = 6
+num_aerosols = 13
+num_meteorology = 12
+num_surface_flux = 1
+
+idx_aerosols_start = 0
+idx_aerosols_end = 325
+idx_meteorology_start = 325
+idx_meteorology_end = 625
+idx_surface_flux_start = 625
+idx_surface_flux_end = 650
+
+indices = {'lat': 0, 'lon': 1, 'year': 2, 'month': 3, 'day': 4, 'hour': 5}
+
+lstm_hidden_size = 64
+lstm_num_layers = 4
+
+embed_size = 64
+nums_categories = {'year': 4, 'month': 12, 'day': 7, 'hour': 24}
+total_num_merra2 = 650
 
 
 def load_checkpoint(model: nn.Module,
@@ -32,39 +48,123 @@ class TimeSeriesDataset(Dataset):
         return self.inputs[index], self.labels[index]
     
 
-class SimpleLSTM(nn.Module):
+# class SimpleLSTM(nn.Module):
     
+#     def __init__(self):
+#         super().__init__()
+#         self.aerosols_lstm = nn.LSTM(nums_variables['aerosols'], 64, batch_first=True)
+#         self.meteorology_lstm = nn.LSTM(nums_variables['meteorology'], 64, batch_first=True)
+#         self.surface_flux_lstm = nn.LSTM(nums_variables['surface_flux'], 64, batch_first=True)
+
+#         self.pre_batch_norm = nn.BatchNorm1d(650)
+#         self.after_lstm_batch_norm = nn.BatchNorm1d(64 * 3)
+
+#         self.relu = nn.ReLU()
+#         self.fc1 = nn.Linear(64 * 3, 128)
+#         self.fc1_batch_norm = nn.BatchNorm1d(128)
+#         self.out = nn.Linear(128, 1)
+
+#     def forward(self, x):
+#         x = self.pre_batch_norm(x[:, offset:])
+
+#         aerosols = x[:, indices['aerosols_start']:indices['aerosols_end']].view(-1, 25, nums_variables['aerosols'])
+#         meteorology = x[:, indices['meteorology_start']:indices['meteorology_end']].view(-1, 25, nums_variables['meteorology'])
+#         surface_flux = x[:, indices['surface_flux_start']:indices['surface_flux_end']].view(-1, 25, nums_variables['surface_flux'])
+
+#         aerosols, _ = self.aerosols_lstm(aerosols)
+#         meteorology, _ = self.meteorology_lstm(meteorology)
+#         surface_flux, _ = self.surface_flux_lstm(surface_flux)
+
+#         x = torch.cat([aerosols[:, -1], meteorology[:, -1], surface_flux[:, -1]], dim=1)
+#         x = self.after_lstm_batch_norm(x)
+
+#         x = self.fc1(x)
+#         x = self.fc1_batch_norm(x)
+#         x = self.relu(x)
+#         x = self.out(x)
+
+#         return x
+    
+
+class EmbeddingLayer(nn.Module):
+
     def __init__(self):
         super().__init__()
-        self.aerosols_lstm = nn.LSTM(nums_variables['aerosols'], 64, batch_first=True)
-        self.meteorology_lstm = nn.LSTM(nums_variables['meteorology'], 64, batch_first=True)
-        self.surface_flux_lstm = nn.LSTM(nums_variables['surface_flux'], 64, batch_first=True)
+        self.embeddings = nn.ModuleDict({key: nn.Embedding(value, embed_size) for key, value in nums_categories.items()})
 
-        self.pre_batch_norm = nn.BatchNorm1d(650)
-        self.after_lstm_batch_norm = nn.BatchNorm1d(64 * 3)
-
-        self.relu = nn.ReLU()
-        self.fc1 = nn.Linear(64 * 3, 128)
-        self.fc1_batch_norm = nn.BatchNorm1d(128)
-        self.out = nn.Linear(128, 1)
-
+    
     def forward(self, x):
-        x = self.pre_batch_norm(x[:, offset:])
+        embeddings = [self.embeddings[key](x[:, indices[key]].long()) for key in nums_categories.keys()]
+        x = torch.cat(embeddings, dim=1)
+        return x
+    
 
-        aerosols = x[:, indices['aerosols_start']:indices['aerosols_end']].view(-1, 25, nums_variables['aerosols'])
-        meteorology = x[:, indices['meteorology_start']:indices['meteorology_end']].view(-1, 25, nums_variables['meteorology'])
-        surface_flux = x[:, indices['surface_flux_start']:indices['surface_flux_end']].view(-1, 25, nums_variables['surface_flux'])
+class LSTMLayer(nn.Module):
+
+    def __init__(self):
+        super().__init__()
+
+        self.pre_batch_norm_lstm = nn.BatchNorm1d(total_num_merra2)
+
+        self.aerosols_lstm = nn.LSTM(num_aerosols, lstm_hidden_size, batch_first=True, num_layers=lstm_num_layers)
+        self.meteorology_lstm = nn.LSTM(num_meteorology, lstm_hidden_size, batch_first=True, num_layers=lstm_num_layers)
+        self.surface_flux_lstm = nn.LSTM(num_surface_flux, lstm_hidden_size, batch_first=True, num_layers=lstm_num_layers)
+    
+    def forward(self, x):
+        x = self.pre_batch_norm_lstm(x[:, offset:])
+
+        aerosols = x[:, idx_aerosols_start:idx_aerosols_end].view(-1, 25, num_aerosols)
+        aerosols = torch.cat([aerosols[:, 1:, :], aerosols[:, 0, :].unsqueeze(1)], dim=1)
+
+        meteorology = x[:, idx_meteorology_start:idx_meteorology_end].view(-1, 25, num_meteorology)
+        meteorology = torch.cat([meteorology[:, 1:, :], meteorology[:, 0, :].unsqueeze(1)], dim=1)
+
+        surface_flux = x[:, idx_surface_flux_start:idx_surface_flux_end].view(-1, 25, num_surface_flux)
+        surface_flux = torch.cat([surface_flux[:, 1:, :], surface_flux[:, 0, :].unsqueeze(1)], dim=1)
 
         aerosols, _ = self.aerosols_lstm(aerosols)
         meteorology, _ = self.meteorology_lstm(meteorology)
         surface_flux, _ = self.surface_flux_lstm(surface_flux)
 
         x = torch.cat([aerosols[:, -1], meteorology[:, -1], surface_flux[:, -1]], dim=1)
-        x = self.after_lstm_batch_norm(x)
 
+        return x
+    
+
+class MERRA2Model(nn.Module):
+    
+    def __init__(self):
+        super().__init__()
+        self.embedding_layer = EmbeddingLayer()
+        self.lstm_layer = LSTMLayer()
+
+        self.pre_batch_norm = nn.BatchNorm1d(embed_size * len(nums_categories) + lstm_hidden_size * 3)
+
+        self.relu = nn.ReLU()
+
+        self.fc1 = nn.Linear(embed_size * len(nums_categories) + lstm_hidden_size * 3 + 2, 256)
+        self.batch_norm1 = nn.BatchNorm1d(256)
+
+        self.fc2 = nn.Linear(256, 128)
+        self.batch_norm2 = nn.BatchNorm1d(128)
+
+        self.out = nn.Linear(128, 1)
+
+    def forward(self, x):
+        embedding = self.embedding_layer(x)
+        lstm = self.lstm_layer(x)
+
+        pre_layer = torch.cat([embedding, lstm], dim=1)
+        pre_layer = self.pre_batch_norm(pre_layer)
+
+        x = torch.cat([x[:, :2], pre_layer], dim=1)
         x = self.fc1(x)
-        x = self.fc1_batch_norm(x)
+        x = self.batch_norm1(x)
         x = self.relu(x)
-        x = self.out(x)
 
+        x = self.fc2(x)
+        x = self.batch_norm2(x)
+        x = self.relu(x)
+
+        x = self.out(x)
         return x

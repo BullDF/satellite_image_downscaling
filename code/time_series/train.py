@@ -12,9 +12,9 @@ from typing import Optional
 import matplotlib.pyplot as plt
 
 
-LEARNING_RATE = 0.005
-TRAIN_BATCH_SIZE = 1024
-EVAL_BATCH_SIZE = 2048
+LEARNING_RATE = 0.001
+TRAIN_BATCH_SIZE = 512
+EVAL_BATCH_SIZE = 1024
 NUM_EPOCHS = 50
 
 
@@ -37,7 +37,7 @@ def get_training_round(model: nn.Module) -> int:
             num = max(num, int(file[len(model.__class__.__name__):]) + 1)
         elif num != 0:
             return num
-    return 1
+    return 1 if num == 1 else num
 
 
 def train(model: nn.Module,
@@ -135,11 +135,11 @@ if __name__ == '__main__':
     val_inputs = np.load(time_series_dir + 'val_inputs.npy')
     val_labels = np.load(time_series_dir + 'val_labels.npy')
 
-    model = SimpleLSTM().to(device)
+    model = MERRA2Model().to(device)
     train_dataset = TimeSeriesDataset(train_inputs, train_labels)
     val_dataset = TimeSeriesDataset(val_inputs, val_labels)
 
-    train(model, train_dataset, val_dataset, get_training_round(model), save=False)
+    train(model, train_dataset, val_dataset, get_training_round(model))
 
     # load_checkpoint(model, 5, 200)
 
