@@ -8,7 +8,7 @@ from tqdm import tqdm
 from model import *
 from config import *
 import os
-from typing import Optional
+from typing import Optional, Tuple
 import matplotlib.pyplot as plt
 
 
@@ -128,16 +128,22 @@ def plot_losses(train_dataset: TimeSeriesDataset,
     plt.show()
 
 
-if __name__ == '__main__':
-    
+def load_data() -> Tuple[TimeSeriesDataset]:
     train_inputs = np.load(time_series_dir + 'train_inputs.npy')
     train_labels = np.load(time_series_dir + 'train_labels.npy')
     val_inputs = np.load(time_series_dir + 'val_inputs.npy')
     val_labels = np.load(time_series_dir + 'val_labels.npy')
 
-    model = MERRA2Model().to(device)
     train_dataset = TimeSeriesDataset(train_inputs, train_labels)
     val_dataset = TimeSeriesDataset(val_inputs, val_labels)
+
+    return train_dataset, val_dataset
+
+
+if __name__ == '__main__':
+
+    model = MERRA2Model().to(device)
+    train_dataset, val_dataset = load_data()
 
     train(model, train_dataset, val_dataset, get_training_round(model))
 
