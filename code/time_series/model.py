@@ -8,7 +8,7 @@ indices = {'site': 0, 'lat': 1, 'lon': 2, 'year': 3, 'month': 4, 'day': 5, 'hour
 num_sites = 11
 
 
-class MERRA2Dataset(Dataset):
+class TimeSeriesDataset(Dataset):
     
     def __init__(self, inputs, labels):
         super().__init__()
