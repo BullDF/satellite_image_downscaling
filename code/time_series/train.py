@@ -8,7 +8,7 @@ from tqdm import tqdm
 from model import *
 from config import *
 import os
-from typing import Optional, List
+from typing import Optional
 import matplotlib.pyplot as plt
 
 
@@ -46,7 +46,8 @@ def train(model: nn.Module,
           round: int,
           initial_epoch: int=0,
           checkpoint_round: Optional[int]=None,
-          save: bool=True) -> None:
+          save: bool=True,
+          save_every: int=5) -> None:
     optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
     criterion = nn.MSELoss().to(device)
     train_loader = DataLoader(train_dataset, batch_size=TRAIN_BATCH_SIZE, shuffle=True)
@@ -79,7 +80,7 @@ def train(model: nn.Module,
         print(f'Epoch {epoch + 1}/{NUM_EPOCHS + initial_epoch}, Training Loss: {evaluate(model, train_dataset)}')
         print(f'Validation Loss: {evaluate(model, val_dataset)}')
 
-        if (epoch + 1) % 5 == 0 and save:
+        if save and (epoch + 1) % save_every == 0:
             torch.save(model.state_dict(), model_dir + f'epoch{epoch + 1}.pth')
 
 @torch.no_grad()
@@ -143,5 +144,3 @@ if __name__ == '__main__':
     # load_checkpoint(model, 5, 200)
 
     # print(evaluate(model, train_dataset))
-
-    # leave_one_out_cv(X_train, y_train, 11)
