@@ -1,11 +1,20 @@
 import torch
 import torch.nn as nn
+from config import checkpoints_dir
 
 from torch.utils.data import Dataset
 
 nums_variables = {'aerosols': 13, 'meteorology': 12, 'surface_flux': 1}
 indices = {'site': 0, 'lat': 1, 'lon': 2, 'year': 3, 'month': 4, 'day': 5, 'hour': 6, 'aerosols_start': 7, 'aerosols_end': 7 + 13 * 25, 'meteorology_start': 7 + 13 * 25, 'meteorology_end': 7 + 13 * 25 + 12 * 25, 'surface_flux_start': 7 + 13 * 25 + 12 * 25, 'surface_flux_end': 7 + 13 * 25 + 12 * 25 + 1 * 25}
 num_sites = 11
+
+
+def load_checkpoint(model: nn.Module,
+                    round: int,
+                    epoch: int) -> None:
+    state_dict = torch.load(checkpoints_dir + f'{model.__class__.__name__}{round}/epoch{epoch}.pth', weights_only=True)
+
+    model.load_state_dict(state_dict)
 
 
 class TimeSeriesDataset(Dataset):
