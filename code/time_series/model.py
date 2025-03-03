@@ -21,8 +21,8 @@ class TimeSeriesDataset(Dataset):
     
     def __init__(self, inputs, labels):
         super().__init__()
-        self.inputs = torch.tensor(inputs)
-        self.labels = torch.tensor(labels)
+        self.inputs = torch.tensor(inputs).to(torch.float32)
+        self.labels = torch.tensor(labels).to(torch.float32)
 
     def __len__(self):
         return len(self.inputs)
@@ -48,7 +48,6 @@ class SimpleLSTM(nn.Module):
         self.out = nn.Linear(128, 1)
 
     def forward(self, x):
-        x = x[:, indices['aerosols_start']:]
         x = self.pre_batch_norm(x)
 
         aerosols = x[:, indices['aerosols_start']:indices['aerosols_end']].view(-1, 25, nums_variables['aerosols'])
