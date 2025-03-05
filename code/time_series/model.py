@@ -18,7 +18,7 @@ idx_surface_flux_end = 650
 
 indices = {'lat': 0, 'lon': 1, 'season': 2, 'month': 3, 'day_of_week': 4, 'hour': 5}
 
-lstm_hidden_size = 64
+lstm_hidden_size = 128
 lstm_num_layers = 4
 
 embed_size = 64
@@ -28,8 +28,9 @@ total_num_merra2 = 650
 
 def load_checkpoint(model: nn.Module,
                     round: int,
-                    epoch: int) -> None:
-    state_dict = torch.load(checkpoints_dir + f'{model.__class__.__name__}{round}/epoch{epoch}.pth', weights_only=True)
+                    epoch: int,
+                    device: str) -> None:
+    state_dict = torch.load(checkpoints_dir + f'{model.__class__.__name__}{round}/epoch{epoch}.pth', weights_only=True, map_location=device)
 
     model.load_state_dict(state_dict)
 

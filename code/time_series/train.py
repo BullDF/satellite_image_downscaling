@@ -12,7 +12,7 @@ from typing import Optional, Tuple
 import matplotlib.pyplot as plt
 
 
-LEARNING_RATE = 0.001
+LEARNING_RATE = 0.0005
 TRAIN_BATCH_SIZE = 512
 EVAL_BATCH_SIZE = 1024
 NUM_EPOCHS = 50
@@ -53,7 +53,7 @@ def train(model: nn.Module,
     train_loader = DataLoader(train_dataset, batch_size=TRAIN_BATCH_SIZE, shuffle=True)
 
     if initial_epoch != 0:
-        load_checkpoint(model, checkpoint_round, initial_epoch)
+        load_checkpoint(model, checkpoint_round, initial_epoch, device)
 
     if save:
         model_dir = checkpoints_dir + f'{model.__class__.__name__}{round}/'
@@ -145,7 +145,7 @@ if __name__ == '__main__':
     model = MERRA2Model().to(device)
     train_dataset, val_dataset = load_data()
 
-    train(model, train_dataset, val_dataset, get_training_round(model))
+    train(model, train_dataset, val_dataset, get_training_round(model), 50, 7)
 
     # load_checkpoint(model, 5, 200)
 
