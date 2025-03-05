@@ -37,7 +37,7 @@ def get_training_round(model: nn.Module) -> int:
             num = max(num, int(file[len(model.__class__.__name__):]) + 1)
         elif num != 0:
             return num
-    return 1 if num == 1 else num
+    return 1 if num == 0 else num
 
 
 def train(model: nn.Module,
