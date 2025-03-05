@@ -91,10 +91,10 @@ class EmbeddingLayer(nn.Module):
     def __init__(self):
         super().__init__()
         self.embeddings = nn.ModuleDict({key: nn.Embedding(value, embed_size) for key, value in nums_categories.items()})
-
     
     def forward(self, x):
-        embeddings = [self.embeddings[key](x[:, indices[key]].long()) for key in nums_categories.keys()]
+        embeddings = [self.embeddings[key](x[:, indices[key]].to(torch.long)) for key in nums_categories.keys()]
+        
         x = torch.cat(embeddings, dim=1)
         return x
     
