@@ -16,13 +16,13 @@ idx_meteorology_end = 625
 idx_surface_flux_start = 625
 idx_surface_flux_end = 650
 
-indices = {'lat': 0, 'lon': 1, 'season': 2, 'month': 3, 'day': 4, 'hour': 5}
+indices = {'lat': 0, 'lon': 1, 'season': 2, 'month': 3, 'day_of_week': 4, 'hour': 5}
 
 lstm_hidden_size = 64
 lstm_num_layers = 4
 
 embed_size = 64
-nums_categories = {'season': 4, 'month': 12, 'day': 7, 'hour': 24}
+nums_categories = {'season': 4, 'month': 12, 'day_of_week': 7, 'hour': 24}
 total_num_merra2 = 650
 
 
