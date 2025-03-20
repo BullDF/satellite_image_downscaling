@@ -1,0 +1,77 @@
+```{r}
+library(RcppCNPy)
+library(tidyverse)
+
+setwd("/Users/bulldf/University of Toronto/2024 Fall/STA497/code/time_series")
+data_dir <- "../../data/"
+time_series_dir <- paste0(data_dir, "time_series/")
+```
+
+```{r}
+train_preds <- npyLoad(paste0(time_series_dir, "train_preds.npy")) |>
+  as_tibble() |>
+  set_names("pred")
+val_preds <- npyLoad(paste0(time_series_dir, "val_preds.npy")) |>
+  as_tibble() |>
+  set_names("pred")
+
+train_labels <- npyLoad(paste0(time_series_dir, "train_labels.npy")) |>
+  as_tibble() |>
+  set_names("label")
+val_labels <- npyLoad(paste0(time_series_dir, "val_labels.npy")) |>
+  as_tibble() |>
+  set_names("label")
+```
+
+```{r}
+base_names <- c("lat", "lon", "season", "month", "day_of_week", "hour")
+
+aerosols_vars <- c("DUEXTTAU", "SSSMASS25", "SSSMASS", "OCSMASS", "BCSMASS",
+                   "SSEXTTAU", "TOTEXTTAU", "BCEXTTAU", "SUEXTTAU", "OCEXTTAU",
+                   "SO4SMASS", "DUSMASS", "DUSMASS25")
+aerosols_cols <- rep(aerosols_vars, times = 25) |>
+  paste0("_", rep(1:25, each = length(aerosols_vars)))
+
+meteorology_vars <- c("U2M", "T500", "PS", "Q500", "T10M", "Q850",
+                      "V2M", "V10M", "T850", "U10M", "QV2M", "QV10M")
+meteorology_cols <- rep(meteorology_vars, times = 25) |>
+  paste0("_", rep(1:25, each = length(meteorology_vars)))
+
+surface_flux_cols <- rep("PBLH", times = 25) |> paste0("_", 1:25)
+
+input_cols <- c(base_names, aerosols_cols, meteorology_cols, surface_flux_cols)
+```
+
+```{r}
+train_inputs <- npyLoad(paste0(time_series_dir, "train_inputs.npy")) |>
+  as_tibble() |>
+  set_names(input_cols) |>
+  select(DUEXTTAU_1, SSSMASS25_1, SSSMASS_1, OCSMASS_1, BCSMASS_1,
+         SSEXTTAU_1, TOTEXTTAU_1, BCEXTTAU_1, SUEXTTAU_1, OCEXTTAU_1,
+         SO4SMASS_1, DUSMASS_1, DUSMASS25_1,
+         U2M_1, T500_1, PS_1, Q500_1, T10M_1, Q850_1,
+         V2M_1, V10M_1, T850_1, U10M_1, QV2M_1, QV10M_1,
+         PBLH_1)
+
+val_inputs <- npyLoad(paste0(time_series_dir, "val_inputs.npy")) |>
+  as_tibble() |>
+  set_names(input_cols) |>
+  select(DUEXTTAU_1, SSSMASS25_1, SSSMASS_1, OCSMASS_1, BCSMASS_1,
+         SSEXTTAU_1, TOTEXTTAU_1, BCEXTTAU_1, SUEXTTAU_1, OCEXTTAU_1,
+         SO4SMASS_1, DUSMASS_1, DUSMASS25_1,
+         U2M_1, T500_1, PS_1, Q500_1, T10M_1, Q850_1,
+         V2M_1, V10M_1, T850_1, U10M_1, QV2M_1, QV10M_1,
+         PBLH_1)
+
+train <- cbind(train_preds, train_inputs) |> as_tibble()
+train
+
+val <- cbind(val_preds, val_inputs) |> as_tibble()
+val
+```
+
+```{r}
+model1 <- lm(pred ~ SSSMASS25_1 + OCSMASS_1 + BCSMASS_1 +
+               SO4SMASS_1 + DUSMASS25_1, data = val)
+summary(model1)
+```
