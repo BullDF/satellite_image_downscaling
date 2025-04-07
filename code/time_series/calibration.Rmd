@@ -72,6 +72,16 @@ val
 
 ```{r}
 model1 <- lm(pred ~ SSSMASS25_1 + OCSMASS_1 + BCSMASS_1 +
-               SO4SMASS_1 + DUSMASS25_1, data = val)
+               I(1.375 * SO4SMASS_1) + DUSMASS25_1, data = val)
 summary(model1)
+```
+
+```{r}
+summary(val)
+
+val |>
+  filter(DUEXTTAU_1 < 0) |>
+  # filter(DUEXTTAU_1 > 0) |>
+  nrow()
+hist(val$SSSMASS25_1)
 ```
