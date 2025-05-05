@@ -10,3 +10,4 @@ config.py
 papers/
 data/
 .DS_Store
+shapefiles/
