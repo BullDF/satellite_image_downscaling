@@ -159,6 +159,10 @@ def save_pm25_predictions(date: str, preds: np.ndarray, country_code: str) -> No
     ds.to_netcdf(preds_dir + f'{country_code}/' + date.strftime('%Y%m%d') + '.nc4', format='NETCDF4', engine='netcdf4')
 
 
+def get_shapefile_name(country_code: str) -> str:
+    return shapefiles_dir + f'{country_code}/{country_code}_adm0.shp'
+
+
 if __name__ == "__main__":
     model = load_model()
     date = '20231229'
