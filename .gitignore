@@ -11,3 +11,4 @@ papers/
 data/
 .DS_Store
 shapefiles/
+draft.*
