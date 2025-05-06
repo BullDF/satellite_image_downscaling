@@ -5,6 +5,7 @@ from config import *
 import numpy as np
 from typing import Literal
 import datetime
+import os
 
 
 if torch.cuda.is_available():
@@ -114,7 +115,7 @@ def merge_merra2_two_days(date: str, lats: list[int], lons: list[int]):
         end_idx = start_idx + hour * num_surface_flux
         time_series[start_time:end_time, start_idx:end_idx] = curr_surface_flux[:, :hour * num_surface_flux]
     
-    return time_series
+    return sequence, time_series
 
 
 def predict_pm25_daily(model: nn.Module,
@@ -125,12 +126,37 @@ def predict_pm25_daily(model: nn.Module,
     lats = np.arange(lats[0], lats[1] + lat_step_size, lat_step_size)
     lons = np.arange(lons[0], lons[1] + lon_step_size, lon_step_size)
 
-    time_series = merge_merra2_two_days(date.strftime('%Y%m%d'), lats, lons)
+    sequence, time_series = merge_merra2_two_days(date.strftime('%Y%m%d'), lats, lons)
     time_series = torch.from_numpy(time_series).float()
     time_series = time_series.to(device)
 
     preds = model(time_series).cpu().detach().numpy()
-    return preds
+    return np.concatenate([sequence, preds], axis=1)
+
+
+def save_pm25_predictions(date: str, preds: np.ndarray, country_code: str) -> None:
+    hours = preds[:, 0]
+    date = datetime.datetime.strptime(date, '%Y%m%d')
+    datetimes = [date + datetime.timedelta(hours=int(h)) for h in hours]
+    lats = preds[:, 1]
+    lons = preds[:, 2]
+    predictions = preds[:, 3]
+
+    if not os.path.exists(preds_dir + f'{country_code}/'):
+        os.makedirs(preds_dir + f'{country_code}/')
+
+    ds = xr.Dataset(
+        {
+            'pm25_pred': (['time', 'lat', 'lon'], predictions.reshape(len(np.unique(datetimes)), len(np.unique(lats)), len(np.unique(lons))))
+        },
+        coords={
+            'time': np.unique(datetimes),
+            'lat': np.unique(lats),
+            'lon': np.unique(lons),
+        }
+    )
+
+    ds.to_netcdf(preds_dir + f'{country_code}/' + date.strftime('%Y%m%d') + '.nc4', format='NETCDF4', engine='netcdf4')
 
 
 if __name__ == "__main__":
@@ -139,8 +165,4 @@ if __name__ == "__main__":
     lats = [40, 42]
     lons = [67.5, 70]
     preds = predict_pm25_daily(model, date, lats, lons)
-    print(preds[25 * 18 + 18])
-
-    # train_inputs = np.load(time_series_dir + 'train_inputs.npy')
-    # train_input = train_inputs[0]
-    # print(train_input)
+    save_pm25_predictions(date, preds, 'AFG')
