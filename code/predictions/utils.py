@@ -7,6 +7,8 @@ from typing import Literal
 import datetime
 import os
 
+from torch.utils.data import DataLoader
+
 
 if torch.cuda.is_available():
     device = torch.device("cuda")
@@ -51,7 +53,7 @@ def merge_merra2_daily(date: str, lats: list[int], lons: list[int]) -> tuple[np.
     return aerosols, meteorology, surface_flux
 
 
-def merge_merra2_two_days(date: str, lats: list[int], lons: list[int]):
+def merge_merra2_two_days(date: str, lats: list[int], lons: list[int]) -> tuple[np.ndarray]:
     curr_date = datetime.datetime.strptime(date, '%Y%m%d')
     curr_month = curr_date.month
     curr_season = month_to_season[curr_month]
@@ -121,16 +123,24 @@ def merge_merra2_two_days(date: str, lats: list[int], lons: list[int]):
 def predict_pm25_daily(model: nn.Module,
                        date: str,
                        lats: list[int],
-                       lons: list[int]):
+                       lons: list[int]) -> np.ndarray:
     date = datetime.datetime.strptime(date, '%Y%m%d')
     lats = np.arange(lats[0], lats[1] + lat_step_size, lat_step_size)
     lons = np.arange(lons[0], lons[1] + lon_step_size, lon_step_size)
 
     sequence, time_series = merge_merra2_two_days(date.strftime('%Y%m%d'), lats, lons)
     time_series = torch.from_numpy(time_series).float()
-    time_series = time_series.to(device)
 
-    preds = model(time_series).cpu().detach().numpy()
+    dataloader = DataLoader(time_series, batch_size=batch_size, shuffle=False)
+    preds = np.array([])
+
+    for inputs in dataloader:
+        inputs = inputs.to(device)
+        with torch.no_grad():
+            outputs = model(inputs)
+            outputs = outputs.cpu().numpy()
+            preds = np.concatenate([preds, outputs], axis=0) if preds.size else outputs
+
     return np.concatenate([sequence, preds], axis=1)
 
 
@@ -161,6 +171,24 @@ def save_pm25_predictions(date: str, preds: np.ndarray, country_code: str) -> No
 
 def get_shapefile_name(country_code: str) -> str:
     return shapefiles_dir + f'{country_code}/{country_code}_adm0.shp'
+
+
+def predict(start_date: str,
+            end_date: str,
+            lats: list[int],
+            lons: list[int],
+            country_code: str) -> None:
+    model = load_model()
+    start_date = datetime.datetime.strptime(start_date, '%Y%m%d')
+    end_date = datetime.datetime.strptime(end_date, '%Y%m%d')
+    curr_date = start_date
+
+    while curr_date <= end_date:
+        date = curr_date.strftime('%Y%m%d')
+        print(f'Predicting for {date}')
+        preds = predict_pm25_daily(model, date, lats, lons)
+        save_pm25_predictions(date, preds, country_code)
+        curr_date += datetime.timedelta(days=1)
 
 
 if __name__ == "__main__":
