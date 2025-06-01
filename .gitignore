@@ -13,3 +13,4 @@ data/
 shapefiles/
 draft.*
 *.csv
+cedar/
