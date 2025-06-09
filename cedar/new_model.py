@@ -24,14 +24,14 @@ class LSTMLayer(nn.Module):
     def __init__(self):
         super().__init__()
 
-        self.pre_layer_norm_lstm = nn.LayerNorm(total_num_merra2)
+        self.pre_batch_norm_lstm = nn.BatchNorm1d(total_num_merra2)
 
         self.aerosols_lstm = nn.LSTM(num_aerosols, lstm_hidden_size, batch_first=True, num_layers=lstm_num_layers)
         self.meteorology_lstm = nn.LSTM(num_meteorology, lstm_hidden_size, batch_first=True, num_layers=lstm_num_layers)
         self.surface_flux_lstm = nn.LSTM(num_surface_flux, lstm_hidden_size, batch_first=True, num_layers=lstm_num_layers)
     
     def forward(self, x):
-        x = self.pre_layer_norm_lstm(x[:, num_general_variables:])
+        x = self.pre_batch_norm_lstm(x[:, num_general_variables:])
 
         aerosols = x[:, idx_aerosols_start:idx_aerosols_end].view(-1, 25, num_aerosols)
         aerosols = torch.cat([aerosols[:, 1:, :], aerosols[:, 0, :].unsqueeze(1)], dim=1)
@@ -57,15 +57,15 @@ class LSTMCalibrationModel(nn.Module):
         self.embedding_layer = EmbeddingLayer()
         self.lstm_layer = LSTMLayer()
 
-        self.pre_layer_norm = nn.LayerNorm(embed_size * len(nums_categories) + lstm_hidden_size * 3)
+        self.pre_batch_norm = nn.BatchNorm1d(embed_size * len(nums_categories) + lstm_hidden_size * 3)
 
         self.relu = nn.ReLU()
 
         self.fc1 = nn.Linear(embed_size * len(nums_categories) + lstm_hidden_size * 3 + 2, 256)
-        self.layer_norm1 = nn.LayerNorm(256)
+        self.batch_norm1 = nn.BatchNorm1d(256)
 
         self.fc2 = nn.Linear(256, 128)
-        self.layer_norm2 = nn.LayerNorm(128)
+        self.batch_norm2 = nn.BatchNorm1d(128)
 
         self.out = nn.Linear(128, 1)
 
@@ -74,15 +74,15 @@ class LSTMCalibrationModel(nn.Module):
         lstm = self.lstm_layer(x)
 
         pre_layer = torch.cat([embedding, lstm], dim=1)
-        pre_layer = self.pre_layer_norm(pre_layer)
+        pre_layer = self.pre_batch_norm(pre_layer)
 
         x = torch.cat([x[:, :2], pre_layer], dim=1)
         x = self.fc1(x)
-        x = self.layer_norm1(x)
+        x = self.batch_norm1(x)
         x = self.relu(x)
 
         x = self.fc2(x)
-        x = self.layer_norm2(x)
+        x = self.batch_norm2(x)
         x = self.relu(x)
 
         x = self.out(x)
