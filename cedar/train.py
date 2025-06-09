@@ -103,7 +103,7 @@ def load_data() -> tuple[CalibrationDataset]:
     return train_dataset, val_dataset
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--lr', type=float, default=0.001, help='Learning rate')
     parser.add_argument('--train_bs', type=int, default=512, help='Training batch size')
@@ -141,4 +141,7 @@ if __name__ == '__main__':
         print(f'Save Every: {save_every}')
 
     train(model, train_dataset, val_dataset, get_training_round(model), num_epochs, lr, train_bs, eval_bs, initial_epoch, checkpoint_round, save, save_every)
-    
+
+
+if __name__ == '__main__':
+    main()
