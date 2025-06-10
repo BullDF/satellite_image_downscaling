@@ -84,7 +84,7 @@ class ProcessBlock2(nn.Module):
         return x
     
 
-class CalibrationModel(nn.Module):
+class ASDM(nn.Module):
     def __init__(self):
         super().__init__()
         self.process_block1 = ProcessBlock1()
@@ -101,4 +101,3 @@ class CalibrationModel(nn.Module):
         combined = torch.cat([process_block1_output, temporal_block1_output, temporal_block2_output], dim=1)
         output = self.process_block2(combined)
         return output.squeeze(-1)
-    

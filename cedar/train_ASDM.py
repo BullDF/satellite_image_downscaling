@@ -104,7 +104,7 @@ def main():
     parser.set_defaults(save=True)
     args = parser.parse_args()
 
-    model = CalibrationModel().to(device)
+    model = ASDM().to(device)
     train_dataset, val_dataset = load_data()
 
     lr = args.lr
