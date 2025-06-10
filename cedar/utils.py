@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 from torch.utils.data import Dataset
 
+import numpy as np
+
 import os
 
 
@@ -47,6 +49,18 @@ def load_checkpoint(model: nn.Module,
     state_dict = torch.load(checkpoints_dir + f'{model.__class__.__name__}{round}/epoch{epoch}.pth', weights_only=True, map_location=device)
 
     model.load_state_dict(state_dict)
+
+
+def load_data() -> tuple[CalibrationDataset]:
+    train_inputs = np.load(data_dir + 'train_inputs_scaled.npy')
+    train_labels = np.load(data_dir + 'train_labels.npy')
+    val_inputs = np.load(data_dir + 'val_inputs_scaled.npy')
+    val_labels = np.load(data_dir + 'val_labels.npy')
+
+    train_dataset = CalibrationDataset(train_inputs, train_labels)
+    val_dataset = CalibrationDataset(val_inputs, val_labels)
+
+    return train_dataset, val_dataset
 
 
 def get_training_round(model: nn.Module) -> int:

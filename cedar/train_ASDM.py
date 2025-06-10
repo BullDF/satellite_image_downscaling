@@ -1,5 +1,3 @@
-import numpy as np
-
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
@@ -93,19 +91,7 @@ def evaluate(model: nn.Module,
     return running_loss / len(dataloader)
 
 
-def load_data() -> Tuple[CalibrationDataset]:
-    train_inputs = np.load(data_dir + 'train_inputs.npy')
-    train_labels = np.load(data_dir + 'train_labels.npy')
-    val_inputs = np.load(data_dir + 'val_inputs.npy')
-    val_labels = np.load(data_dir + 'val_labels.npy')
-
-    train_dataset = CalibrationDataset(train_inputs, train_labels)
-    val_dataset = CalibrationDataset(val_inputs, val_labels)
-
-    return train_dataset, val_dataset
-
-
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--lr', type=float, default=0.001, help='Learning rate')
     parser.add_argument('--train_bs', type=int, default=512, help='Training batch size')
@@ -144,3 +130,6 @@ if __name__ == '__main__':
 
     train(model, train_dataset, val_dataset, get_training_round(model), num_epochs, lr, train_bs, eval_bs, initial_epoch, checkpoint_round, save, save_every)
     
+
+if __name__ == '__main__':
+    main()

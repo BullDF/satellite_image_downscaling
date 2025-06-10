@@ -1,5 +1,3 @@
-import numpy as np
-
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
@@ -89,18 +87,6 @@ def evaluate(model: nn.Module,
         loss = criterion(outputs, labels)
         running_loss += loss.item()
     return running_loss / len(dataloader)
-
-
-def load_data() -> tuple[CalibrationDataset]:
-    train_inputs = np.load(data_dir + 'train_inputs_scaled.npy')
-    train_labels = np.load(data_dir + 'train_labels.npy')
-    val_inputs = np.load(data_dir + 'val_inputs_scaled.npy')
-    val_labels = np.load(data_dir + 'val_labels.npy')
-
-    train_dataset = CalibrationDataset(train_inputs, train_labels)
-    val_dataset = CalibrationDataset(val_inputs, val_labels)
-
-    return train_dataset, val_dataset
 
 
 def main():
