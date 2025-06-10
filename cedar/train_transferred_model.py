@@ -5,8 +5,6 @@ import torch.optim as optim
 
 from ASDMTE import *
 
-from tqdm import tqdm
-
 import os
 
 import argparse
@@ -59,7 +57,7 @@ def train(model: nn.Module,
         print()
         print(f'Training epoch {epoch + 1}')
         model.train()
-        for inputs, _ in tqdm(train_loader):
+        for inputs, _ in train_loader:
             inputs = inputs.to(device)
             _, present, lags = reshape_data(inputs)
             outputs = model(lags)
