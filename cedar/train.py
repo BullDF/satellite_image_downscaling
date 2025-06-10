@@ -46,6 +46,8 @@ def train(model: nn.Module,
         model_dir = checkpoints_dir + f'{model.__class__.__name__}{round}/'
         os.makedirs(model_dir)
 
+        print(f'----------Training {model.__class__.__name__}{round}----------')
+
     print()
     print(f'Epoch {initial_epoch}/{num_epochs + initial_epoch}, Training Loss: {evaluate(model, train_dataset, eval_bs)}')
     print(f'Validation Loss: {evaluate(model, val_dataset, eval_bs)}')
