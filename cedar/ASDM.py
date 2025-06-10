@@ -59,9 +59,9 @@ class TemporalBlock(nn.Module):
     
 
 class ProcessBlock2(nn.Module):
-    def __init__(self):
+    def __init__(self, input_dim: int):
         super().__init__()
-        self.block1 = BuildingBlock(16 * 3, 64)
+        self.block1 = BuildingBlock(input_dim, 64)
         self.block2 = BuildingBlock(64, 128)
         self.block3 = BuildingBlock(128, 256, 0.5)
         self.block4 = BuildingBlock(256, 128)
@@ -90,7 +90,7 @@ class ASDM(nn.Module):
         self.process_block1 = ProcessBlock1()
         self.temporal_block1 = TemporalBlock()
         self.temporal_block2 = TemporalBlock()
-        self.process_block2 = ProcessBlock2()
+        self.process_block2 = ProcessBlock2(16 * 3)
 
     def forward(self, x):
         general_variables, present, lags = reshape_data(x)

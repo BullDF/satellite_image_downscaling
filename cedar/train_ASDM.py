@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 import torch.optim as optim
 
-from ASDM import *
+from ASDMTE import *
 
 import os
 
@@ -104,7 +104,7 @@ def main():
     parser.set_defaults(save=True)
     args = parser.parse_args()
 
-    model = ASDM().to(device)
+    model = ASDMTE().to(device)
     train_dataset, val_dataset = load_data()
 
     lr = args.lr

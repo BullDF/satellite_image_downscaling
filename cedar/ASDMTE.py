@@ -44,3 +44,28 @@ class TransferredModel(nn.Module):
         x = self.block10(x)
 
         return x
+
+
+class ASDMTE(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+        self.process_block1 = ProcessBlock1()
+        self.temporal_block1 = TemporalBlock()
+        self.temporal_block2 = TemporalBlock()
+        self.transferred_model = TransferredModel()
+        self.transferred_block = BuildingBlock(num_merra2, 16)
+        self.process_block2 = ProcessBlock2(16 * 4)
+
+    def forward(self, x):
+        general_variables, present, lags = reshape_data(x)
+
+        process_block1_output = self.process_block1(torch.cat([general_variables, present], dim=1))
+        temporal_block1_output = self.temporal_block1(lags)
+        temporal_block2_output = self.temporal_block2(lags)
+        transferred_model_output = self.transferred_model(lags)
+        transferred_model_output = self.transferred_block(transferred_model_output)
+
+        combined = torch.cat([process_block1_output, temporal_block1_output, temporal_block2_output, transferred_model_output], dim=1)
+        output = self.process_block2(combined)
+        return output.squeeze(-1)
