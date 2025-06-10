@@ -5,7 +5,7 @@ class TransferredModel(nn.Module):
     def __init__(self):
         super().__init__()
 
-        self.pre_layer_norm = nn.LayerNorm(num_merra2)
+        self.pre_layer_norm = nn.BatchNorm1d(num_merra2)
 
         self.lstm1 = nn.LSTM(num_merra2, 16)
         self.lstm2 = nn.LSTM(16, 32)
@@ -23,7 +23,9 @@ class TransferredModel(nn.Module):
         self.block10 = BuildingBlock(16, num_merra2)
 
     def forward(self, x):
+        x = torch.permute(x, (0, 2, 1))
         x = self.pre_layer_norm(x)
+        x = torch.permute(x, (0, 2, 1))
 
         x, _ = self.lstm1(x)
         x, _ = self.lstm2(x)

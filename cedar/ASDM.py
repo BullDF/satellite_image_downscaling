@@ -8,7 +8,7 @@ class BuildingBlock(nn.Module):
     def __init__(self, input_dim: int, output_dim: int, dropout_rate: float=0):
         super().__init__()
         self.fc = nn.Linear(input_dim, output_dim)
-        self.layer_norm = nn.LayerNorm(output_dim)
+        self.batch_norm = nn.BatchNorm1d(output_dim)
         self.relu = nn.LeakyReLU(0.1)
         self.dropout_rate = dropout_rate
         if dropout_rate > 0:
@@ -16,7 +16,7 @@ class BuildingBlock(nn.Module):
 
     def forward(self, x):
         x = self.fc(x)
-        x = self.layer_norm(x)
+        x = self.batch_norm(x)
         x = self.relu(x)
         if self.dropout_rate > 0:
             x = self.dropout(x)
