@@ -31,10 +31,10 @@ The project has progressed through several key stages:
 ## Repository Structure
 
 - `.`
-- `├── cedar/`: Core PyTorch model definitions, training scripts, and utilities.
-- `├── code/`: Scripts and notebooks for data downloading, preprocessing, and validation.
-- `├── MERRA2 Calibration-Downscale/`: LaTeX source for the project report (`main.tex`).
-- `├── data/`: Datasets used in the project.
+  ├── `cedar/`: Core PyTorch model definitions, training scripts, and utilities.
+  ├── `code/`: Scripts and notebooks for data downloading, preprocessing, and validation.
+  └── `MERRA2 Calibration-Downscale/`: LaTeX source for the project report (`main.tex`).
+
 
 
 ## How to Run the Code
