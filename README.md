@@ -31,9 +31,9 @@ The project has progressed through several key stages:
 ## Repository Structure
 
 - `.`
-  - `├── cedar/`: Code for use on the Compute Canada Cedar server.
-  - `├── code/`: Older, deprecated code, notebooks for exploration, and validation.
-  - `└── MERRA2 Calibration-Downscale/`: LaTeX source for the project report ([main.pdf](MERRA2%20Calibration-Downscale/main.pdf)).
+- `├── cedar/`: Code for use on the Compute Canada Cedar server.
+- `├── code/`: Older, deprecated code, notebooks for exploration, and validation.
+- `└── MERRA2 Calibration-Downscale/`: LaTeX source for the project report ([main.pdf](MERRA2%20Calibration-Downscale/main.pdf)).
 
 ## How to Run the Code
 
