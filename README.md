@@ -24,7 +24,7 @@ The project has progressed through several key stages:
     *   Embedding layers for categorical features (site, season).
     *   Inclusion of aridity information as a feature.
 
-4.  **Model Development:** Based on our experiments, we have developed and implemented several custom PyTorch models, including an `LSTMCalibrationModel` and an `ASDM` (Aerosol-Surface-Dynamics Model), which are the core of our current approach.
+4.  **Model Development:** Based on our experiments, we have developed and implemented several custom PyTorch models, including an `LSTMCalibrationModel` and an `ASDM` (Artificial Neural Network Sequential Downscaling Method), which are the core of our current approach.
 
 5.  **Out-of-Sample Validation:** We have begun the process of validating our models on out-of-sample data to assess their generalizability, which is a crucial step before proceeding to the downscaling phase.
 
@@ -35,7 +35,7 @@ The project has progressed through several key stages:
 - `├── code/`: Scripts and notebooks for data downloading, preprocessing, and validation.
 - `├── MERRA2 Calibration-Downscale/`: LaTeX source for the project report (`main.tex`).
 - `├── data/`: Datasets used in the project.
-- `└── checkpoints/`: Saved model checkpoints.
+
 
 ## How to Run the Code
 
