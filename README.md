@@ -33,7 +33,7 @@ The project has progressed through several key stages:
 - `.`
   ├── `cedar/`: Core PyTorch model definitions, training scripts, and utilities.
   ├── `code/`: Scripts and notebooks for data downloading, preprocessing, and validation.
-  └── `MERRA2 Calibration-Downscale/`: LaTeX source for the project report (`main.tex`).
+  └── `MERRA2 Calibration-Downscale/`: LaTeX source for the project report ([main.pdf](MERRA2%20Calibration-Downscale/main.pdf)).
 
 
 
