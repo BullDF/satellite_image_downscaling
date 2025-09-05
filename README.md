@@ -1,4 +1,4 @@
-# Satellite Image Downscaling for Air Quality Assessment
+# Satellite Image Downscaling with Deep Learning
 
 This repository contains the code and documentation for a project on calibrating and downscaling MERRA-2 reanalysis data to improve air quality assessments, with a focus on PM2.5 concentrations.
 
